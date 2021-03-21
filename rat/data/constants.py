@@ -1,5 +1,4 @@
 # CONSTANTS
-DATABASE_DIR = '/home/luisao/perso/RAT_bot/database/Data.db'  # have to be absolute path
 # About time
 NOW = 0
 FIVE_MINUTES = 60 * 5

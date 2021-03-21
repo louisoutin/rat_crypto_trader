@@ -77,8 +77,7 @@ class MultiHeadedAttention(nn.Module):
         query = query.permute((0, 2, 3, 1))  # [128,2*12,11,31+4]->[128,11,31+4,2*12]
         ########################################### local-attention ######################################################
         local_weight_q = torch.matmul(query[:, :, self.local_context_length - 1:, :],
-                                      query.transpose(-2, -1)) / math.sqrt \
-                             (q_size3)  # [128,11,31,2*12] *[128,11,2*12,31+4]->[128,11,31,31+4]
+                                      query.transpose(-2, -1)) / math.sqrt(q_size3)  # [128,11,31,2*12] *[128,11,2*12,31+4]->[128,11,31,31+4]
         # [128,11,31,31+4]->[128,11,1,5*31]
         local_weight_q_list = [F.softmax(local_weight_q[:, :, i: i + 1, i: i + self.local_context_length], dim=-1) for i
                                in range(q_size2)]

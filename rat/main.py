@@ -55,7 +55,8 @@ def launch_train(ctx: dict):
         (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).mkdir(parents=True)
     start = parse_time(ctx["start"])
     end = parse_time(ctx["end"])
-    DM = DataMatrices(start=start, end=end,
+    DM = DataMatrices(database_path=ctx["database_path"],
+                      start=start, end=end,
                       market="poloniex",
                       feature_number=ctx["feature_number"],
                       window_size=ctx["x_window_size"],
@@ -102,23 +103,23 @@ def launch_train(ctx: dict):
                        device=device)
 
     # model = make_model3(N=6, d_model=512, d_ff=2048, h=8, dropout=0.1)
-    model = model.to(device)
+    model.to(device)
     # model_size, factor, warmup, optimizer)
     model_opt = NoamOpt(lr_model_sz, factor, warmup,
                         torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9,
                                          weight_decay=weight_decay))
 
     loss_compute = SimpleLossCompute(
-        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, True),
+        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, True, device=device),
         model_opt)
     evaluate_loss_compute = SimpleLossCompute(
-        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, False), None)
+        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, False, device=device), None)
 
     ##########################train net####################################################
     tst_loss, tst_portfolio_value = train_net(DM, total_step, output_step, x_window_size, local_context_length, model,
                                               ctx["model_dir"], ctx["model_index"], loss_compute, evaluate_loss_compute,
                                               True,
-                                              True)
+                                              True, device=device)
 
     print("tst_loss", tst_loss)
     print("tst_portfolio_value", tst_portfolio_value)
@@ -141,7 +142,8 @@ def launch_test(ctx):
 
     model = torch.load(ctx["model_dir"] + '/' + str(ctx["model_index"]) + '.pkl')
 
-    DM = DataMatrices(start=start, end=end,
+    DM = DataMatrices(database_path=ctx["database_path"],
+                      start=start, end=end,
                       market="poloniex",
                       feature_number=ctx["feature_number"],
                       window_size=ctx["x_window_size"],

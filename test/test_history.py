@@ -8,7 +8,8 @@ def test_history():
     start_date = ((start_date - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))[0]
     end_date = pd.to_datetime(['2017-04-10'])
     end_date = ((end_date - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))[0]
-    h = HistoryManager(coin_number=5,
+    h = HistoryManager(database_path="/home/luisao/Projects/RAT_bot/database/Data.db",
+                       coin_number=5,
                        end=end_date,
                        volume_average_days=30,
                        volume_forward=0,

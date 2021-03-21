@@ -5,7 +5,7 @@ from .replay_buffer import ReplayBuffer
 
 
 class DataMatrices:
-    def __init__(self, start, end, period, batch_size=50, volume_average_days=30, buffer_bias_ratio=0,
+    def __init__(self, database_path, start, end, period, batch_size=50, volume_average_days=30, buffer_bias_ratio=0,
                  market="poloniex", coin_filter=1, window_size=50, feature_number=3, test_portion=0.15,
                  portion_reversed=False, online=False, is_permed=False):
         """
@@ -33,7 +33,8 @@ class DataMatrices:
         self.__features = type_list
         self.feature_number = feature_number
         volume_forward = get_volume_forward(self.__end - start, test_portion, portion_reversed)
-        self.__history_manager = HistoryManager(coin_number=coin_filter, end=self.__end,
+        self.__history_manager = HistoryManager(database_path=database_path,
+                                                coin_number=coin_filter, end=self.__end,
                                                 volume_average_days=volume_average_days,
                                                 volume_forward=volume_forward, online=online)
         if market == "poloniex":
@@ -87,7 +88,8 @@ class DataMatrices:
         train_config = config["training"]
         start = parse_time(input_config["start_date"])
         end = parse_time(input_config["end_date"])
-        return DataMatrices(start=start,
+        return DataMatrices(database_path=input_config["database_path"],
+                            start=start,
                             end=end,
                             market=input_config["market"],
                             feature_number=input_config["feature_number"],
@@ -166,7 +168,7 @@ class DataMatrices:
         M = [self.get_submatrix(index) for index in indexs]
         M = np.array(M)
         X = M[:, :, :, :-1]
-        y = M[:, :, :, -1] / M[:, 0, None, :, -2]
+        y = M[:, :, :, -1] / M[:, 0, None, :, -2]  # divide by the close price (O) of timestamp before (-2)
         return {"X": X, "y": y, "last_w": last_w, "setw": setw}
 
     def __pack_samples_test_online(self, ind_start, ind_end, x_window_size):

@@ -1,4 +1,4 @@
 numpy
 pandas
-xarray
-torch
+torch>=1.8.0
+binance-data

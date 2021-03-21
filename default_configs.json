@@ -1,4 +1,5 @@
 {
+  "database_path": "/home/luisao/Projects/RAT_bot/database/Data.db",
   "start": "2016-01-01",
   "end": "2017-12-31",
   "total_step": 50000,
@@ -12,7 +13,7 @@
   "variance_penalty": 0.0,
   "cost_penalty": 0.0,
   "learning_rate": 0.0001,
-  "model_dir": "/home/luisao/perso/RAT_bot/runs",
+  "model_dir": "/home/luisao/Projects/RAT_bot/runs",
   "model_name": "first",
   "model_index": 1,
   "model_dim": 12,
@@ -20,6 +21,6 @@
   "local_context_length": 5,
   "weight_decay": 5e-8,
   "daily_interest_rate": 0.001,
-  "log_dir": "/home/luisao/perso/RAT_bot/logs",
-  "device": "cpu"
+  "log_dir": "/home/luisao/Projects/RAT_bot/logs",
+  "device": "cuda:0"
 }

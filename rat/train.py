@@ -49,11 +49,11 @@ def test_batch(DM, x_window_size, model, evaluate_loss_compute, local_context_le
     tst_batch_last_w = tst_batch["last_w"]
     tst_batch_w = tst_batch["setw"]
 
-    tst_previous_w = torch.tensor(tst_batch_last_w, dtype=torch.float).to(device)
+    tst_previous_w = torch.tensor(tst_batch_last_w, dtype=torch.float, device=device)
     tst_previous_w = torch.unsqueeze(tst_previous_w, 1)  # [2426, 1, 11]
     tst_batch_input = tst_batch_input.transpose((1, 0, 2, 3))
     tst_batch_input = tst_batch_input.transpose((0, 1, 3, 2))
-    tst_src = torch.tensor(tst_batch_input, dtype=torch.float).to(device)
+    tst_src = torch.tensor(tst_batch_input, dtype=torch.float, device=device)
     tst_src_mask = (torch.ones(tst_src.size()[1], 1, x_window_size) == 1)  # [128, 1, 31]
     tst_currt_price = tst_src.permute((3, 1, 2, 0))  # (4,128,31,11)->(11,128,31,3)
     #############################################################################
@@ -66,7 +66,7 @@ def test_batch(DM, x_window_size, model, evaluate_loss_compute, local_context_le
     tst_currt_price = tst_currt_price[:, :, -1:, :]  # (11,128,31,4)->(11,128,1,4)
     tst_trg_mask = make_std_mask(tst_currt_price, tst_src.size()[1])
     tst_batch_y = tst_batch_y.transpose((0, 2, 1))  # (128, 4, 11) ->(128,11,4)
-    tst_trg_y = torch.tensor(tst_batch_y, dtype=torch.float).to(device)
+    tst_trg_y = torch.tensor(tst_batch_y, dtype=torch.float, device=device)
     ###########################################################################################################
     tst_out = model.forward(tst_src, tst_currt_price, tst_previous_w,  # [128,1,11]   [128, 11, 31, 4])
                             tst_src_mask, tst_trg_mask, padding_price)

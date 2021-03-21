@@ -2,7 +2,8 @@ from rat.data.dataloader import DataMatrices, parse_time
 
 
 def test_coinlist():
-    d = DataMatrices(start=parse_time("2016-12-01"),
+    d = DataMatrices(database_path="/home/luisao/Projects/RAT_bot/database/Data.db",
+                     start=parse_time("2016-12-01"),
                      end=parse_time("2016-12-31"),
                      market="poloniex",
                      feature_number=4,

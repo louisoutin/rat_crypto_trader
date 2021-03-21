@@ -51,9 +51,11 @@ class EncoderDecoder(nn.Module):
                  decoder,
                  price_series_pe,
                  local_price_pe,
-                 local_context_length):
+                 local_context_length,
+                 device="cpu"):
 
         super(EncoderDecoder, self).__init__()
+        self.device = device
         self.encoder = encoder
         self.decoder = decoder
         self.batch_size = batch_size
@@ -88,14 +90,14 @@ class EncoderDecoder(nn.Module):
         price_series = self.price_series_pe(price_series)  # [11*128,31,2*12]
         price_series = price_series.view(self.coin_num, -1, self.window_size, self.d_model_Encoder)  # [11*128,31,2*12]->[11,128,31,2*12]
         encode_out = self.encoder(price_series, price_series_mask)
-#        encode_out=self.linear_src_2_embedding(encode_out)
-###########################padding price#######################################################################################
+        #        encode_out=self.linear_src_2_embedding(encode_out)
+        ###########################padding price#######################################################################################
         if padding_price is not None:
             local_price_context = torch.cat([padding_price, local_price_context], 2)    #[11,128,5-1,4] cat [11,128,1,4] -> [11,128,5,4]
             local_price_context = local_price_context.contiguous().view(local_price_context.size()[0]*price_series.size()[1], self.local_context_length*2-1,self.feature_number)  #[11,128,5,4]->[11*128,5,4]
         else:
             local_price_context = local_price_context.contiguous().view(local_price_context.size()[0]*price_series.size()[1], 1, self.feature_number)
-##############Divide by close price################################
+        ##############Divide by close price################################
         local_price_context = local_price_context/local_price_context[:, -1:, 0:1]
         local_price_context = self.linear_local_price(local_price_context)                   #[11*128,5,4]->[11*128,5,2*12]
         local_price_context = self.local_price_pe(local_price_context)                       #[11*128,5,2*12]
@@ -104,14 +106,13 @@ class EncoderDecoder(nn.Module):
             padding_price = padding_price.view(self.coin_num, -1, self.local_context_length-1, self.d_model_Decoder)   #[11,128,5-1,2*12]
         local_price_context = local_price_context[:, -self.local_context_length:, :]                                                              #[11*128,5,2*12]
         local_price_context = local_price_context.view(self.coin_num, -1, self.local_context_length, self.d_model_Decoder)                         #[11,128,5,2*12]
-#################################padding_price=None###########################################################################
+        #################################padding_price=None###########################################################################
         decode_out = self.decoder(local_price_context, encode_out, price_series_mask, local_price_mask, padding_price)
         decode_out = decode_out.transpose(1, 0)       # [11,128,1,2*12]->#[128,11,1,2*12]
         decode_out = torch.squeeze(decode_out, 2)      # [128,11,1,2*12]->[128,11,2*12]
         previous_w = previous_w.permute(0, 2, 1)        # [128,1,11]->[128,11,1]
-        print("SHAPES", decode_out.shape, previous_w.shape)
         out = torch.cat([decode_out, previous_w], 2)  # [128,11,2*12]  cat [128,11,1] -> [128,11,2*12+1]
-###################################  Decision making ##################################################
+        ###################################  Decision making ##################################################
         out2 = self.linear_out2(out)  # [128,11,2*12+1]->[128,11,1]
         out = self.linear_out(out)  # [128,11,2*12+1]->[128,11,1]
 

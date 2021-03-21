@@ -10,13 +10,13 @@ def test_online(DM, x_window_size, model, evaluate_loss_compute, local_context_l
     tst_batch_last_w = tst_batch["last_w"]
     tst_batch_w = tst_batch["setw"]
 
-    tst_previous_w = torch.tensor(tst_batch_last_w, dtype=torch.float).to(device)
+    tst_previous_w = torch.tensor(tst_batch_last_w, dtype=torch.float, device=device)
     tst_previous_w = torch.unsqueeze(tst_previous_w, 1)
 
     tst_batch_input = tst_batch_input.transpose((1, 0, 2, 3))
     tst_batch_input = tst_batch_input.transpose((0, 1, 3, 2))
 
-    long_term_tst_src = torch.tensor(tst_batch_input, dtype=torch.float).to(device)
+    long_term_tst_src = torch.tensor(tst_batch_input, dtype=torch.float, device=device)
     #########################################################################################
     tst_src_mask = (torch.ones(long_term_tst_src.size()[1], 1, x_window_size) == 1)
 
@@ -26,7 +26,7 @@ def test_online(DM, x_window_size, model, evaluate_loss_compute, local_context_l
     tst_trg_mask = make_std_mask(long_term_tst_currt_price[:, :, 0:1, :], long_term_tst_src.size()[1])
 
     tst_batch_y = tst_batch_y.transpose((0, 3, 2, 1))
-    tst_trg_y = torch.tensor(tst_batch_y, dtype=torch.float).to(device)
+    tst_trg_y = torch.tensor(tst_batch_y, dtype=torch.float, device=device)
     tst_long_term_w = []
     tst_y_window_size = len(DM._test_ind) - x_window_size - 1 - 1
     for j in range(tst_y_window_size + 1):  # 0-9
