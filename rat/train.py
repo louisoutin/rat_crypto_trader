@@ -9,7 +9,8 @@ def train_net(DM, total_step, output_step, x_window_size, local_context_length, 
     start = time.time()
     total_loss = 0
     # TRAINING
-    max_tst_portfolio_value = 0
+    max_val_portfolio_value = 0
+    min_val_loss = 0
     for i in range(total_step):
         model.train()
         out, trg_y = train_one_step(DM, x_window_size, model, local_context_length, device)
@@ -37,12 +38,12 @@ def train_net(DM, total_step, output_step, x_window_size, local_context_length, 
                       (i, tst_loss.item(), tst_portfolio_value.item(), 1 / elapsed))
                 start = time.time()
 
-                if tst_portfolio_value > max_tst_portfolio_value:
-                    max_tst_portfolio_value = tst_portfolio_value
+                if tst_portfolio_value > max_val_portfolio_value:
+                    max_val_portfolio_value = tst_portfolio_value
+                    min_val_loss = tst_loss
                     torch.save(model, model_dir + '/' + str(model_index) + ".pkl")
-                    #    torch.save(model, model_dir+'/'+str(model_index)+".pkl")
                     print("save model!")
-    return tst_loss, tst_portfolio_value
+    return min_val_loss, max_val_portfolio_value
 
 
 def train_one_step(DM, x_window_size, model, local_context_length, device):

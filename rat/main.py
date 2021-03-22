@@ -132,6 +132,11 @@ def launch_test(ctx):
 
     device = ctx["device"]
 
+    csv_dir = ctx["log_dir"] + "/" + "train_summary.csv"
+
+    if not Path(ctx["log_dir"]).exists():
+        Path(ctx["log_dir"]).mkdir(parents=True)
+
     model = torch.load(ctx["model_dir"] + '/' + str(ctx["model_index"]) + '.pkl')
 
     DM = DataMatrices(database_path=ctx["database_path"],
@@ -149,13 +154,12 @@ def launch_test(ctx):
                       test_portion=ctx["test_portion"],  # 0.08,
                       portion_reversed=False)
 
-    test_loss_compute = Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, device=device)
+    test_loss_compute = Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, size_average=False, device=device)
 
     ##########################test net#####################################################
     tst_portfolio_value, SR, CR, St_v, tst_pc_array, TO = test_net(DM, x_window_size, local_context_length, model,
                                                                    test_loss_compute, device=device)
 
-    csv_dir = ctx["log_dir"] + "/" + "train_summary.csv"
     d = {"net_dir": [ctx["model_index"]],
          "fAPV": [tst_portfolio_value.item()],
          "SR": [SR.item()],

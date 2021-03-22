@@ -173,7 +173,7 @@ class DataMatrices:
 
     def __pack_samples_test_online(self, ind_start, ind_end, x_window_size):
         #        indexs = np.array(indexs)
-        last_w = self.__PVM.values[indexs - 1, :]
+        last_w = self.__PVM.values[ind_start-1:ind_start, :]
 
         #        y_window_size = window_size-x_window_size
         def setw(w):
