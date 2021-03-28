@@ -1,4 +1,4 @@
-from rat.data.exchange.poloniex import Poloniex
+from rat.old_data.exchange.poloniex import Poloniex
 
 
 def test_poloniex():

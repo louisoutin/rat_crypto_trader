@@ -1,6 +1,6 @@
 import pandas as pd
-from rat.data.history_manager import HistoryManager
-# from rat.data.constants import *
+from rat.old_data.history_manager import HistoryManager
+# from rat.old_data.constants import *
 
 
 def test_history():

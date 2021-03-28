@@ -1,4 +1,4 @@
-from rat.data.dataloader import DataMatrices, parse_time
+from rat.old_data.dataloader import DataMatrices, parse_time
 
 
 def test_coinlist():

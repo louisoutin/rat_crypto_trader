@@ -45,7 +45,7 @@ class HistoryManager:
     def get_global_panel(self, start, end, period=300, features=('close',)):
         """
         :param start/end: linux timestamp in seconds
-        :param period: time interval of each data access point
+        :param period: time interval of each old_data access point
         :param features: tuple or list of the feature names
         :return a panel, [feature, coin, time]
         """
@@ -163,7 +163,7 @@ class HistoryManager:
         else:
             raise ValueError('peroid has to be 5min, 15min, 30min, 2hr, 4hr, or a day')
 
-    # add new history data into the database
+    # add new history old_data into the database
     def update_data(self, start, end, coin):
         connection = sqlite3.connect(self.database_path)
         try:
@@ -181,7 +181,7 @@ class HistoryManager:
                 if min_date > start and self._online:
                     self.__fill_data(start, min_date - self.__storage_period - 1, coin, cursor)
 
-            # if there is no data
+            # if there is no old_data
         finally:
             connection.commit()
             connection.close()
@@ -201,7 +201,7 @@ class HistoryManager:
             start=start,
             end=end,
             period=self.__storage_period)
-        print("fill %s data from %s to %s" % (coin, datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M'),
+        print("fill %s old_data from %s to %s" % (coin, datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M'),
                                               datetime.fromtimestamp(end).strftime('%Y-%m-%d %H:%M')))
         for c in chart:
             if c["date"] > 0:

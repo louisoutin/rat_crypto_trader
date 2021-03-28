@@ -7,7 +7,7 @@ import torch
 from . import __version__
 from docopt import docopt
 
-from rat.data.dataloader import parse_time, DataMatrices
+from rat.old_data.dataloader import parse_time, DataMatrices
 from rat.helpers import make_model
 from rat.loss.batch_loss import Batch_Loss
 from rat.loss.test_loss import Test_Loss

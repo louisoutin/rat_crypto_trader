@@ -11,12 +11,12 @@ class DataMatrices:
         """
         :param start: Unix time
         :param end: Unix time
-        :param access_period: the data access period of the input matrix.
+        :param access_period: the old_data access period of the input matrix.
         :param trade_period: the trading period of the agent.
-        :param global_period: the data access period of the global price matrix.
+        :param global_period: the old_data access period of the global price matrix.
                               if it is not equal to the access period, there will be inserted observations
         :param coin_filter: number of coins that would be selected
-        :param window_size: periods of input data
+        :param window_size: periods of input old_data
         :param train_portion: portion of training set
         :param is_permed: if False, the sample inside a mini-batch is in order
         :param validation_portion: portion of cross-validation set
@@ -148,7 +148,7 @@ class DataMatrices:
     def next_batch(self):
         """
         @:return: the next batch of training sample. The sample is a dictionary
-        with key "X"(input data); "y"(future relative price); "last_w" a numpy array
+        with key "X"(input old_data); "y"(future relative price); "last_w" a numpy array
         with shape [batch_size, assets]; "w" a list of numpy arrays list length is
         batch_size
         """
