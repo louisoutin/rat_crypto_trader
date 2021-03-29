@@ -1,14 +1,27 @@
 from typing import List
+from pathlib import Path
+import json
+import numpy as np
+import pandas as pd
 from binance.client import Client
 
 
-class DataManager():
+class DataManager:
+    # CONSTANTS
+    KLINES_COLUMNS = ["open_time", "open", "high", "low", "close",
+                      "volume", "close_time", "quote_volume", "nb_trades",
+                      "taker_buy_volume", "taker_buy_quote_volume"]
+    STORAGE_PATH = "/home/luisao/perso/rat_crypto_trader/datasets"
+    METADATA_FILENAME = "metadata.json"
+    DATA_FILENAME = "data.parquet"
+    DATASET_FOLDER_PREFIX = "dataset"
 
     def __init__(self,
                  selected_symbols: List[str],
+                 selected_features: List[str],
                  date_start: str = "2016-01-01",
                  date_end: str = "2018-01-01",
-                 period: str = "30min"):
+                 freq: str = "30min"):
         """
         KLINES FORMAT:
 
@@ -31,15 +44,118 @@ class DataManager():
 
         """
         self.client = Client()
-        self.klines = self.client.get_historical_klines("ETHBTC", Client.KLINE_INTERVAL_30MINUTE, "1 Dec, 2017", "1 Jan, 2018")
         info = self.client.get_exchange_info()
         symbols = [s["symbol"] for s in info["symbols"] if "BTC" in s["symbol"]]
-        if not set(selected_symbols).issubset(set(symbols)):
-            raise RuntimeError(f"Some selected symbols are not in the available symbols \nSelected symbols : "
-                               f"\n{selected_symbols}. \nAvailables symbols: \n{symbols}")
+        self._validate_inputs(selected_symbols, symbols, selected_features)
         self.symbols = selected_symbols
-        self._get_kline_df("ETHBTC")
 
-    def _get_kline_df(self, symbol):
-        klines = self.client.get_historical_klines(symbol, Client.KLINE_INTERVAL_30MINUTE, "2016-01-01", "2016-02-01")
-        print("klines", klines)
+        self.data = self.get_data(selected_symbols, selected_features, date_start, date_end, freq)
+        print("data", self.data)
+
+    def _validate_inputs(self,
+                         selected_symbols: List[str],
+                         available_symbols: List[str],
+                         selected_features: List[str]):
+
+        if not set(selected_symbols).issubset(set(available_symbols)):
+            raise RuntimeError(f"Some selected symbols are not in the available symbols \nSelected symbols : "
+                               f"\n{selected_symbols}. \nAvailables symbols: \n{available_symbols}")
+        if not set(selected_features).issubset(set(self.KLINES_COLUMNS)):
+            raise RuntimeError(f"Some selected features are not in the available features \nSelected features : "
+                               f"\n{selected_features}. \nAvailables features: \n{self.KLINES_COLUMNS}")
+
+    def _get_kline_df(self, symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+
+        start_date = str(pd.to_datetime(start_date))
+        end_date = str(pd.to_datetime(end_date))
+        klines = self.client.get_historical_klines(symbol, Client.KLINE_INTERVAL_30MINUTE, start_date, end_date)
+        klines_data = np.array(klines)[:, :-1]  # we drop the last column as it says it is useless
+        df = pd.DataFrame(data=klines_data, columns=self.KLINES_COLUMNS)
+        df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
+        df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
+        df = df.set_index("close_time")
+        return df
+
+    def _get_assets_df(self,
+                       selected_symbols: List[str],
+                       selected_features: List[str],
+                       start_date: str,
+                       end_date: str,
+                       freq: str) -> pd.DataFrame:
+
+        start_date = str(pd.to_datetime(start_date))
+        end_date = str(pd.to_datetime(end_date))
+
+        # We add the freq and remove 1ms to match binance close timeindexes
+        time_index = pd.date_range(start=start_date, end=end_date, freq=freq) + pd.Timedelta(freq) - pd.Timedelta('1ms')
+        multi_index = pd.MultiIndex.from_product([selected_symbols, selected_features],
+                                                 names=['coin', 'feature'])
+        panel = pd.DataFrame(index=time_index, columns=multi_index, dtype=np.float32)
+        for coin in selected_symbols:
+            coin_df = self._get_kline_df(coin, start_date, end_date)
+            panel[coin] = coin_df
+        return panel
+
+    def _find_dataset(self,
+                      selected_symbols: List[str],
+                      selected_features: List[str],
+                      start_date: str,
+                      end_date: str,
+                      freq: str):
+        """return NaN if not found, else the DF"""
+
+        metadata = {
+            "selected_symbols": selected_symbols,
+            "selected_features": selected_features,
+            "start_date": start_date,
+            "end_date": end_date,
+            "freq": freq,
+        }
+
+        path = Path(self.STORAGE_PATH)
+        for p in list(path.glob("*")):
+            meta_path = p / self.METADATA_FILENAME
+            with open(meta_path) as json_file:
+                found_metadata = json.load(json_file)
+            if metadata == found_metadata:
+                df = pd.read_parquet(p / self.DATA_FILENAME)
+                return df
+        return None
+
+    def get_data(self,
+                 selected_symbols: List[str],
+                 selected_features: List[str],
+                 start_date: str,
+                 end_date: str,
+                 freq: str) -> pd.DataFrame:
+
+        start_date = str(pd.to_datetime(start_date))
+        end_date = str(pd.to_datetime(end_date))
+
+        # FIND DF
+        # IF NAN, DL IT
+        # RETURN DF
+        df = self._find_dataset(selected_symbols, selected_features, start_date, end_date, freq)
+        if df is None:
+            print("Dataset not found, going to download...")
+            df = self._get_assets_df(selected_symbols, selected_features, start_date, end_date, freq)
+            print("Download done...")
+            metadata = {
+                "selected_symbols": selected_symbols,
+                "selected_features": selected_features,
+                "start_date": start_date,
+                "end_date": end_date,
+                "freq": freq,
+            }
+
+            path = Path(self.STORAGE_PATH)
+            folder_nb = len(list(path.glob("*"))) + 1
+            path = path / (self.DATASET_FOLDER_PREFIX + str(folder_nb))
+            path.mkdir()
+            print(f"Saving Dataframe into {path}")
+            with open(path / self.METADATA_FILENAME, 'w') as outfile:
+                json.dump(metadata, outfile, indent=2)
+            df.to_parquet(path / self.DATA_FILENAME)
+        else:
+            print("Found dataset, skip download")
+        return df
