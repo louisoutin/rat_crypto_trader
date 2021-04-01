@@ -165,7 +165,7 @@ class DataMatrices:
             self.__PVM.iloc[indexs, :] = w
 
         #            print("set w index from %d-%d!" %( indexs[0],indexs[-1]))
-        M = [self.get_submatrix(index) for index in indexs]
+        M = [self.__get_submatrix(index) for index in indexs]
         M = np.array(M)
         X = M[:, :, :, :-1]
         y = M[:, :, :, -1] / M[:, 0, None, :, -2]  # divide by the close price (O) of timestamp before (-2)
@@ -180,17 +180,17 @@ class DataMatrices:
             self.__PVM.iloc[ind_start, :] = w
 
         #            print("set w index from %d-%d!" %( indexs[0],indexs[-1]))
-        M = [self.get_submatrix_test_online(ind_start, ind_end)]  # [1,4,11,2807]
+        M = [self.__get_submatrix_test_online(ind_start, ind_end)]  # [1,4,11,2807]
         M = np.array(M)
         X = M[:, :, :, :-1]
         y = M[:, :, :, x_window_size:] / M[:, 0, None, :, x_window_size - 1:-1]
         return {"X": X, "y": y, "last_w": last_w, "setw": setw}
 
     ##############################################################################################
-    def get_submatrix(self, ind):
+    def __get_submatrix(self, ind):
         return self.__global_data[ind:ind + self._window_size + 1].values.reshape(-1, self.__coin_no, self.feature_number).transpose(2, 1, 0)
 
-    def get_submatrix_test_online(self, ind_start, ind_end):
+    def __get_submatrix_test_online(self, ind_start, ind_end):
         return self.__global_data[ind_start:ind_end].values.reshape(-1, self.__coin_no, self.feature_number).transpose(2, 1, 0)
 
     def __divide_data(self, test_portion, portion_reversed):

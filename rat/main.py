@@ -7,7 +7,7 @@ import torch
 from . import __version__
 from docopt import docopt
 
-from rat.old_data.dataloader import parse_time, DataMatrices
+from rat.data.dataloader import DataMatrices
 from rat.helpers import make_model
 from rat.loss.batch_loss import Batch_Loss
 from rat.loss.test_loss import Test_Loss
@@ -52,22 +52,16 @@ def run_main():
 def launch_train(ctx: dict):
     if not (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).exists():
         (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).mkdir(parents=True)
-    start = parse_time(ctx["start"])
+    start = parse_time()
     end = parse_time(ctx["end"])
-    DM = DataMatrices(database_path=ctx["database_path"],
-                      start=start, end=end,
-                      market="poloniex",
-                      feature_number=ctx["feature_number"],
-                      window_size=ctx["x_window_size"],
-                      online=False,
-                      period=1800,
-                      coin_filter=11,
-                      is_permed=False,
-                      buffer_bias_ratio=5e-5,
-                      batch_size=ctx["batch_size"],  # 128,
-                      volume_average_days=30,
-                      test_portion=ctx["test_portion"],  # 0.08,
-                      portion_reversed=False)
+    DM_train = DataMatrices(selected_symbols=["ETHBTC", "LTCBTC"],
+                            selected_features=["close", "high", "low", "open"],
+                            date_start="2021-01-01",
+                            date_end="2021-03-01",
+                            freq="30T",
+                            window_size=30,
+                            batch_size=64,
+                            buffer_bias_ratio=5e-5)
 
     #################set learning rate###################
     lr_model_sz = 5120

@@ -79,7 +79,7 @@ def train_one_step(DM, x_window_size, model, local_context_length, device):
 
 
 def test_batch(DM, x_window_size, model, local_context_length, device):
-    tst_batch = DM.get_test_set()
+    tst_batch = DM.get_set()
     tst_batch_input = tst_batch["X"]  # (128, 4, 11, 31)
     tst_batch_y = tst_batch["y"]
     tst_batch_last_w = tst_batch["last_w"]

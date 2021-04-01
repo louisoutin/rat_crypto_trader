@@ -11,12 +11,14 @@ class DataManager:
     KLINES_COLUMNS = ["open_time", "open", "high", "low", "close",
                       "volume", "close_time", "quote_volume", "nb_trades",
                       "taker_buy_volume", "taker_buy_quote_volume"]
-    STORAGE_PATH = "/home/luisao/perso/rat_crypto_trader/datasets"
     METADATA_FILENAME = "metadata.json"
     DATA_FILENAME = "data.parquet"
     DATASET_FOLDER_PREFIX = "dataset"
+    COIN_INDEX_NAME = "coin"
+    FEATURE_INDEX_NAME = "feature"
 
     def __init__(self,
+                 database_path: str,
                  selected_symbols: List[str],
                  selected_features: List[str],
                  date_start: str = "2016-01-01",
@@ -43,14 +45,17 @@ class DataManager:
             ]
 
         """
+        self.database_path = database_path
         self.client = Client()
         info = self.client.get_exchange_info()
         symbols = [s["symbol"] for s in info["symbols"] if "BTC" in s["symbol"]]
         self._validate_inputs(selected_symbols, symbols, selected_features)
         self.symbols = selected_symbols
 
-        self.data = self.get_data(selected_symbols, selected_features, date_start, date_end, freq)
-        print("data", self.data)
+        self.data = self._get_data(selected_symbols, selected_features, date_start, date_end, freq)
+
+    def get_data(self):
+        return self.data
 
     def _validate_inputs(self,
                          selected_symbols: List[str],
@@ -71,6 +76,8 @@ class DataManager:
         klines = self.client.get_historical_klines(symbol, Client.KLINE_INTERVAL_30MINUTE, start_date, end_date)
         klines_data = np.array(klines)[:, :-1]  # we drop the last column as it says it is useless
         df = pd.DataFrame(data=klines_data, columns=self.KLINES_COLUMNS)
+        float_cols = [c for c in df.columns if "time" not in c]
+        df[float_cols] = df[float_cols].apply(pd.to_numeric)
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         df = df.set_index("close_time")
@@ -89,8 +96,8 @@ class DataManager:
         # We add the freq and remove 1ms to match binance close timeindexes
         time_index = pd.date_range(start=start_date, end=end_date, freq=freq) + pd.Timedelta(freq) - pd.Timedelta('1ms')
         multi_index = pd.MultiIndex.from_product([selected_symbols, selected_features],
-                                                 names=['coin', 'feature'])
-        panel = pd.DataFrame(index=time_index, columns=multi_index, dtype=np.float32)
+                                                 names=[self.COIN_INDEX_NAME, self.FEATURE_INDEX_NAME])
+        panel = pd.DataFrame(index=time_index, columns=multi_index)
         for coin in selected_symbols:
             coin_df = self._get_kline_df(coin, start_date, end_date)
             panel[coin] = coin_df
@@ -112,7 +119,7 @@ class DataManager:
             "freq": freq,
         }
 
-        path = Path(self.STORAGE_PATH)
+        path = Path(self.database_path)
         for p in list(path.glob("*")):
             meta_path = p / self.METADATA_FILENAME
             with open(meta_path) as json_file:
@@ -122,12 +129,12 @@ class DataManager:
                 return df
         return None
 
-    def get_data(self,
-                 selected_symbols: List[str],
-                 selected_features: List[str],
-                 start_date: str,
-                 end_date: str,
-                 freq: str) -> pd.DataFrame:
+    def _get_data(self,
+                  selected_symbols: List[str],
+                  selected_features: List[str],
+                  start_date: str,
+                  end_date: str,
+                  freq: str) -> pd.DataFrame:
 
         start_date = str(pd.to_datetime(start_date))
         end_date = str(pd.to_datetime(end_date))
@@ -148,7 +155,7 @@ class DataManager:
                 "freq": freq,
             }
 
-            path = Path(self.STORAGE_PATH)
+            path = Path(self.database_path)
             folder_nb = len(list(path.glob("*"))) + 1
             path = path / (self.DATASET_FOLDER_PREFIX + str(folder_nb))
             path.mkdir()
