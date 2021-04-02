@@ -13,3 +13,4 @@ def test_coinlist():
                     "30T")
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
     print(c.data)
+    assert not c.data.isnull().values.any()

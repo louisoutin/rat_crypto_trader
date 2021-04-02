@@ -89,6 +89,7 @@ class DataManager:
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         df = df.set_index("close_time")
+        df = df.ffill()
         return df
 
     def _get_assets_df(self,
