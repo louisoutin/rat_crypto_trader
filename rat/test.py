@@ -26,7 +26,7 @@ def test_net(DM, x_window_size, local_context_length, model,
 
 
 def test_online(DM, x_window_size, model, local_context_length, device):
-    tst_batch = DM.get_test_set_online(DM._test_ind[0], DM._test_ind[-1], x_window_size)
+    tst_batch = DM.get_test_set_online(DM.indices[0], DM.indices[-1], x_window_size)
     tst_batch_input = tst_batch["X"]
     tst_batch_y = tst_batch["y"]
     tst_batch_last_w = tst_batch["last_w"]
@@ -49,7 +49,7 @@ def test_online(DM, x_window_size, model, local_context_length, device):
     tst_batch_y = tst_batch_y.transpose((0, 3, 2, 1))
     tst_trg_y = torch.tensor(tst_batch_y, dtype=torch.float, device=device)
     tst_long_term_w = []
-    tst_y_window_size = len(DM._test_ind) - x_window_size - 1 - 1
+    tst_y_window_size = len(DM.indices) - x_window_size - 1 - 1
     for j in range(tst_y_window_size + 1):  # 0-9
         tst_src = long_term_tst_src[:, :, j:j + x_window_size, :]
         tst_currt_price = long_term_tst_currt_price[:, :, j:j + 1, :]

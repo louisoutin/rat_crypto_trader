@@ -3,7 +3,8 @@ import torch
 from .helpers import make_std_mask
 
 
-def train_net(DM, total_step, output_step, x_window_size, local_context_length, model, model_dir, model_index,
+def train_net(DM_train, DM_val, total_step, output_step, x_window_size, local_context_length, model, model_dir,
+              model_index,
               loss_func, eval_loss_func, optimizer, device="cpu"):
     "Standard Training and Logging Function"
     start = time.time()
@@ -13,7 +14,7 @@ def train_net(DM, total_step, output_step, x_window_size, local_context_length, 
     min_val_loss = 0
     for i in range(total_step):
         model.train()
-        out, trg_y = train_one_step(DM, x_window_size, model, local_context_length, device)
+        out, trg_y = train_one_step(DM_train, x_window_size, model, local_context_length, device)
         loss, portfolio_value = loss_func(out, trg_y)
         loss.backward()
         optimizer.step()
@@ -30,7 +31,7 @@ def train_net(DM, total_step, output_step, x_window_size, local_context_length, 
         if i % output_step == 0:
             with torch.no_grad():
                 model.eval()
-                tst_out, tst_trg_y = test_batch(DM, x_window_size, model, local_context_length, device)
+                tst_out, tst_trg_y = test_batch(DM_val, x_window_size, model, local_context_length, device)
                 tst_loss, tst_portfolio_value = eval_loss_func(tst_out, tst_trg_y)
                 tst_total_loss += tst_loss.item()
                 elapsed = time.time() - start

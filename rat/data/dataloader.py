@@ -104,8 +104,6 @@ class DataMatrices:
         print(M[-10].shape)
         M = np.array(M)
         X = M[:, :, :, :-1]
-        print("ze", M[:, :, :, -1])
-        print("gv", M[:, 0, None, :, -2])
         y = M[:, :, :, -1] / M[:, 0, None, :, -2]  # divide by the close price (O) of timestamp before (-2)
         return {"X": X, "y": y, "last_w": last_w, "setw": setw}
 

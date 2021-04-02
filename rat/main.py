@@ -52,16 +52,25 @@ def run_main():
 def launch_train(ctx: dict):
     if not (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).exists():
         (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).mkdir(parents=True)
-    start = parse_time()
-    end = parse_time(ctx["end"])
-    DM_train = DataMatrices(selected_symbols=["ETHBTC", "LTCBTC"],
-                            selected_features=["close", "high", "low", "open"],
-                            date_start="2021-01-01",
-                            date_end="2021-03-01",
-                            freq="30T",
-                            window_size=30,
-                            batch_size=64,
-                            buffer_bias_ratio=5e-5)
+    DM_train = DataMatrices(database_path=ctx["database_path"],
+                            selected_symbols=ctx["selected_symbols"],
+                            selected_features=ctx["selected_features"],
+                            date_start=ctx["train_range"]["start"],
+                            date_end=ctx["train_range"]["end"],
+                            freq=ctx["freq"],
+                            window_size=ctx["x_window_size"],
+                            batch_size=ctx["batch_size"],
+                            buffer_bias_ratio=ctx["buffer_bias_ratio"])
+
+    DM_val = DataMatrices(database_path=ctx["database_path"],
+                          selected_symbols=ctx["selected_symbols"],
+                          selected_features=ctx["selected_features"],
+                          date_start=ctx["val_range"]["start"],
+                          date_end=ctx["val_range"]["end"],
+                          freq=ctx["freq"],
+                          window_size=ctx["x_window_size"],
+                          batch_size=ctx["batch_size"],
+                          buffer_bias_ratio=ctx["buffer_bias_ratio"])
 
     #################set learning rate###################
     lr_model_sz = 5120
@@ -72,8 +81,8 @@ def launch_train(ctx: dict):
     x_window_size = ctx["x_window_size"]  # 31
 
     batch_size = ctx["batch_size"]
-    coin_num = ctx["coin_num"]  # 11
-    feature_number = ctx["feature_number"]  # 4
+    coin_num = len(ctx["selected_symbols"])  # 11
+    feature_number = len(ctx["selected_features"])  # 4
     trading_consumption = ctx["trading_consumption"]  # 0.0025
     variance_penalty = ctx["variance_penalty"]  # 0 #0.01
     cost_penalty = ctx["cost_penalty"]  # 0 #0.01
@@ -103,10 +112,12 @@ def launch_train(ctx: dict):
                                          weight_decay=weight_decay))
 
     loss_compute = Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, device=device)
-    evaluate_loss_compute = Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, device=device)
+    evaluate_loss_compute = Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty,
+                                       device=device)
 
     ##########################train net####################################################
-    tst_loss, tst_portfolio_value = train_net(DM, total_step, output_step, x_window_size, local_context_length, model,
+    tst_loss, tst_portfolio_value = train_net(DM_train, DM_val, total_step, output_step, x_window_size,
+                                              local_context_length, model,
                                               ctx["model_dir"], ctx["model_index"], loss_compute, evaluate_loss_compute,
                                               model_opt, device=device)
 
@@ -148,7 +159,8 @@ def launch_test(ctx):
                       test_portion=ctx["test_portion"],  # 0.08,
                       portion_reversed=False)
 
-    test_loss_compute = Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, size_average=False, device=device)
+    test_loss_compute = Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty,
+                                  size_average=False, device=device)
 
     ##########################test net#####################################################
     tst_portfolio_value, SR, CR, St_v, tst_pc_array, TO = test_net(DM, x_window_size, local_context_length, model,
