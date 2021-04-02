@@ -53,6 +53,7 @@ def launch_train(ctx: dict):
     if not (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).exists():
         (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).mkdir(parents=True)
     DM_train = DataMatrices(database_path=ctx["database_path"],
+                            quote_asset=ctx["quote_asset"],
                             selected_symbols=ctx["selected_symbols"],
                             selected_features=ctx["selected_features"],
                             date_start=ctx["train_range"]["start"],
@@ -63,6 +64,7 @@ def launch_train(ctx: dict):
                             buffer_bias_ratio=ctx["buffer_bias_ratio"])
 
     DM_val = DataMatrices(database_path=ctx["database_path"],
+                          quote_asset=ctx["quote_asset"],
                           selected_symbols=ctx["selected_symbols"],
                           selected_features=ctx["selected_features"],
                           date_start=ctx["val_range"]["start"],

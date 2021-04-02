@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
 from .data_manager import DataManager
@@ -7,14 +9,15 @@ from .replay_buffer import ReplayBuffer
 class DataMatrices:
     def __init__(self,
                  database_path: str,
-                 selected_symbols,
-                 selected_features,
-                 date_start,
-                 date_end,
-                 freq,
-                 window_size,
-                 batch_size=50,
-                 buffer_bias_ratio=0):
+                 quote_asset: str,
+                 selected_symbols: List[str],
+                 selected_features: List[str],
+                 date_start: str,
+                 date_end: str,
+                 freq: str,
+                 window_size: int,
+                 batch_size: int = 50,
+                 buffer_bias_ratio: float = 0):
         """
         :param start: Unix time
         :param end: Unix time
@@ -36,6 +39,7 @@ class DataMatrices:
         self.selected_symbols = selected_symbols
         self.selected_features = selected_features
         self.__history_manager = DataManager(database_path,
+                                             quote_asset,
                                              selected_symbols,
                                              selected_features,
                                              date_start,
