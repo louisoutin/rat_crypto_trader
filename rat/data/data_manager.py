@@ -19,6 +19,7 @@ class DataManager:
 
     def __init__(self,
                  database_path: str,
+                 quote_asset: str,
                  selected_symbols: List[str],
                  selected_features: List[str],
                  date_start: str = "2016-01-01",
@@ -45,13 +46,17 @@ class DataManager:
             ]
 
         """
+        for s in selected_symbols:
+            if not (s.startswith(quote_asset) or s.endswith(quote_asset)):
+                raise RuntimeError(f"Error for symbol {s}, for quote asset {quote_asset}")
+
         self.database_path = database_path
         self.client = Client()
         info = self.client.get_exchange_info()
         symbols = [s["symbol"] for s in info["symbols"] if "BTC" in s["symbol"]]
         self._validate_inputs(selected_symbols, symbols, selected_features)
         self.symbols = selected_symbols
-
+        self.quote_asset = quote_asset
         self.data = self._get_data(selected_symbols, selected_features, date_start, date_end, freq)
 
     def get_data(self):
@@ -78,6 +83,9 @@ class DataManager:
         df = pd.DataFrame(data=klines_data, columns=self.KLINES_COLUMNS)
         float_cols = [c for c in df.columns if "time" not in c]
         df[float_cols] = df[float_cols].apply(pd.to_numeric)
+        if symbol.startswith(self.quote_asset):
+            # reverse the prices if the base is the quote
+            df[float_cols] = 1.0 / df[float_cols]
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         df = df.set_index("close_time")
@@ -100,7 +108,15 @@ class DataManager:
         panel = pd.DataFrame(index=time_index, columns=multi_index)
         for coin in selected_symbols:
             coin_df = self._get_kline_df(coin, start_date, end_date)
-            panel[coin] = coin_df
+            panel[coin] = coin_df[selected_features]
+        actual_symbols = []
+        for coin in selected_symbols:
+            if coin.startswith(self.quote_asset):
+                reversed_coin = coin[len(self.quote_asset):] + self.quote_asset
+                actual_symbols.append(reversed_coin)
+            else:
+                actual_symbols.append(coin)
+        panel.columns.set_levels(actual_symbols, level=0)
         return panel
 
     def _find_dataset(self,
@@ -112,6 +128,7 @@ class DataManager:
         """return NaN if not found, else the DF"""
 
         metadata = {
+            "quote_asset": self.quote_asset,
             "selected_symbols": selected_symbols,
             "selected_features": selected_features,
             "start_date": start_date,
@@ -148,6 +165,7 @@ class DataManager:
             df = self._get_assets_df(selected_symbols, selected_features, start_date, end_date, freq)
             print("Download done...")
             metadata = {
+                "quote_asset": self.quote_asset,
                 "selected_symbols": selected_symbols,
                 "selected_features": selected_features,
                 "start_date": start_date,
