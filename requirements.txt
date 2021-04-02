@@ -1,5 +1,6 @@
 numpy
 pandas
+fastparquet
 torch>=1.8.0
 python-binance
 docopt
