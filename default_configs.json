@@ -1,5 +1,5 @@
 {
-  "database_path": "/home/luisao/perso/rat_crypto_trader/database/Data.db",
+  "database_path": "/home/luisao/perso/rat_crypto_trader/datasets",
   "train_range": {
     "start": "2018-01-01",
     "end": "2021-02-01"
@@ -31,6 +31,7 @@
   "local_context_length": 5,
   "weight_decay": 5e-8,
   "daily_interest_rate": 0.001,
+  "buffer_bias_ratio": 5e-5,
   "log_dir": "/home/luisao/perso/rat_crypto_trader/logs",
-  "device": "cuda:0"
+  "device": "cpu"
 }
