@@ -3,11 +3,10 @@ from torch import nn
 
 
 class Batch_Loss(nn.Module):
-    def __init__(self, commission_ratio, interest_rate, gamma=0.1, beta=0.1, size_average=True, device="cpu"):
+    def __init__(self, commission_ratio, interest_rate, gamma=0.1, beta=0.1, device="cpu"):
         super(Batch_Loss, self).__init__()
         self.gamma = gamma  # variance penalty
         self.beta = beta
-        self.size_average = size_average
         self.commission_ratio = commission_ratio
         self.interest_rate = interest_rate
         self.device = device
@@ -41,9 +40,6 @@ class Batch_Loss(nn.Module):
         batch_loss = -torch.log(reward)
         #####################variance_penalty##############################
         #        variance_penalty = ((torch.log(reward)-torch.log(reward).mean())**2).mean()
-        if self.size_average:
-            loss = batch_loss.mean()  # + self.gamma*variance_penalty + self.beta*cost_penalty.mean()
-            return loss, portfolio_value[0][0]
-        else:
-            loss = batch_loss.mean()  # +self.gamma*variance_penalty + self.beta*cost_penalty.mean() #(dim=0)
-            return loss, portfolio_value[0][0]
+
+        loss = batch_loss.mean()  # +self.gamma*variance_penalty + self.beta*cost_penalty.mean() #(dim=0)
+        return loss, portfolio_value[0][0]

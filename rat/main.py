@@ -7,9 +7,8 @@ import torch
 from . import __version__
 from docopt import docopt
 
-from rat.data.dataloader import parse_time, DataMatrices
+from rat.data.dataloader import DataMatrices
 from rat.helpers import make_model
-from rat.loss.loss_compute import SimpleLossCompute, SimpleLossCompute_tst
 from rat.loss.batch_loss import Batch_Loss
 from rat.loss.test_loss import Test_Loss
 from rat.loss.optimizer import NoamOpt
@@ -53,22 +52,25 @@ def run_main():
 def launch_train(ctx: dict):
     if not (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).exists():
         (Path(ctx["model_dir"]) / ctx["model_name"] / str(ctx["model_index"])).mkdir(parents=True)
-    start = parse_time(ctx["start"])
-    end = parse_time(ctx["end"])
-    DM = DataMatrices(database_path=ctx["database_path"],
-                      start=start, end=end,
-                      market="poloniex",
-                      feature_number=ctx["feature_number"],
-                      window_size=ctx["x_window_size"],
-                      online=False,
-                      period=1800,
-                      coin_filter=11,
-                      is_permed=False,
-                      buffer_bias_ratio=5e-5,
-                      batch_size=ctx["batch_size"],  # 128,
-                      volume_average_days=30,
-                      test_portion=ctx["test_portion"],  # 0.08,
-                      portion_reversed=False)
+    DM_train = DataMatrices(database_path=ctx["database_path"],
+                            selected_symbols=ctx["selected_symbols"],
+                            selected_features=ctx["selected_features"],
+                            date_start=ctx["train_range"]["start"],
+                            date_end=ctx["train_range"]["end"],
+                            freq=ctx["freq"],
+                            window_size=ctx["x_window_size"],
+                            batch_size=ctx["batch_size"],
+                            buffer_bias_ratio=ctx["buffer_bias_ratio"])
+
+    DM_val = DataMatrices(database_path=ctx["database_path"],
+                          selected_symbols=ctx["selected_symbols"],
+                          selected_features=ctx["selected_features"],
+                          date_start=ctx["val_range"]["start"],
+                          date_end=ctx["val_range"]["end"],
+                          freq=ctx["freq"],
+                          window_size=ctx["x_window_size"],
+                          batch_size=ctx["batch_size"],
+                          buffer_bias_ratio=ctx["buffer_bias_ratio"])
 
     #################set learning rate###################
     lr_model_sz = 5120
@@ -79,8 +81,8 @@ def launch_train(ctx: dict):
     x_window_size = ctx["x_window_size"]  # 31
 
     batch_size = ctx["batch_size"]
-    coin_num = ctx["coin_num"]  # 11
-    feature_number = ctx["feature_number"]  # 4
+    coin_num = len(ctx["selected_symbols"])  # 11
+    feature_number = len(ctx["selected_features"])  # 4
     trading_consumption = ctx["trading_consumption"]  # 0.0025
     variance_penalty = ctx["variance_penalty"]  # 0 #0.01
     cost_penalty = ctx["cost_penalty"]  # 0 #0.01
@@ -109,20 +111,18 @@ def launch_train(ctx: dict):
                         torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9,
                                          weight_decay=weight_decay))
 
-    loss_compute = SimpleLossCompute(
-        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, True, device=device),
-        model_opt)
-    evaluate_loss_compute = SimpleLossCompute(
-        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, False, device=device), None)
+    loss_compute = Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, device=device)
+    evaluate_loss_compute = Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty,
+                                       device=device)
 
     ##########################train net####################################################
-    tst_loss, tst_portfolio_value = train_net(DM, total_step, output_step, x_window_size, local_context_length, model,
+    tst_loss, tst_portfolio_value = train_net(DM_train, DM_val, total_step, output_step, x_window_size,
+                                              local_context_length, model,
                                               ctx["model_dir"], ctx["model_index"], loss_compute, evaluate_loss_compute,
-                                              True,
-                                              True, device=device)
+                                              model_opt, device=device)
 
-    print("tst_loss", tst_loss)
-    print("tst_portfolio_value", tst_portfolio_value)
+    print("best tst_loss", tst_loss)
+    print("best tst_portfolio_value", tst_portfolio_value)
 
 
 def launch_test(ctx):
@@ -135,10 +135,12 @@ def launch_test(ctx):
     local_context_length = ctx["local_context_length"]
     interest_rate = ctx["daily_interest_rate"] / 24 / 2
 
-    lr_model_sz = 5120
-    factor = ctx["learning_rate"]  # 1.0
-    warmup = 0  # 800
-    weight_decay = ctx["weight_decay"]
+    device = ctx["device"]
+
+    csv_dir = ctx["log_dir"] + "/" + "train_summary.csv"
+
+    if not Path(ctx["log_dir"]).exists():
+        Path(ctx["log_dir"]).mkdir(parents=True)
 
     model = torch.load(ctx["model_dir"] + '/' + str(ctx["model_index"]) + '.pkl')
 
@@ -157,21 +159,13 @@ def launch_test(ctx):
                       test_portion=ctx["test_portion"],  # 0.08,
                       portion_reversed=False)
 
-    model_opt = NoamOpt(lr_model_sz, factor, warmup,
-                        torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9,
-                                         weight_decay=weight_decay))
-
-    loss_compute = SimpleLossCompute(
-        Batch_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, True),
-        model_opt)
-    test_loss_compute = SimpleLossCompute_tst(
-        Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty, False), None)
+    test_loss_compute = Test_Loss(trading_consumption, interest_rate, variance_penalty, cost_penalty,
+                                  size_average=False, device=device)
 
     ##########################test net#####################################################
-    tst_portfolio_value, SR, CR, St_v, tst_pc_array, TO = test_net(DM, 1, 1, x_window_size, local_context_length, model,
-                                                                   loss_compute, test_loss_compute, False, True)
+    tst_portfolio_value, SR, CR, St_v, tst_pc_array, TO = test_net(DM, x_window_size, local_context_length, model,
+                                                                   test_loss_compute, device=device)
 
-    csv_dir = ctx["log_dir"] + "/" + "train_summary.csv"
     d = {"net_dir": [ctx["model_index"]],
          "fAPV": [tst_portfolio_value.item()],
          "SR": [SR.item()],

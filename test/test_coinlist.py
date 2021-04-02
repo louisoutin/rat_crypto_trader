@@ -1,4 +1,4 @@
-from rat.data.coinlist import CoinList
+from rat.old_data.coinlist import CoinList
 
 
 def test_coinlist():

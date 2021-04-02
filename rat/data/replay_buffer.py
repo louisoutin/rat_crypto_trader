@@ -4,8 +4,8 @@ import numpy as np
 class ReplayBuffer:
     def __init__(self, start_index, end_index, batch_size, is_permed, coin_number, sample_bias=1.0):
         """
-        :param start_index: start index of the training set on the global data matrices
-        :param end_index: end index of the training set on the global data matrices
+        :param start_index: start index of the training set on the global old_data matrices
+        :param end_index: end index of the training set on the global old_data matrices
         """
         self.__coin_number = coin_number
         self.__experiences = [Experience(i) for i in range(start_index, end_index)]
