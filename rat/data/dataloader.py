@@ -105,7 +105,6 @@ class DataMatrices:
             self.__PVM.iloc[indexs, :] = w
 
         M = [self.__get_submatrix(index) for index in indexs]
-        print(M[-10].shape)
         M = np.array(M)
         X = M[:, :, :, :-1]
         y = M[:, :, :, -1] / M[:, 0, None, :, -2]  # divide by the close price (O) of timestamp before (-2)
