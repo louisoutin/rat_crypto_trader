@@ -40,6 +40,8 @@ class ReplayBuffer:
                                                               self.__experiences[-1].state_index,
                                                               self.__sample_bias)])
         else:
+            # add consecutive timestamps in the same batch, idk why the author did that
+            # it bring low intra batch variance, I would expect it to hurt the training process
             batch_start = self.__sample(0, len(self.__experiences) - self.__batch_size,
                                         self.__sample_bias)
             batch = self.__experiences[batch_start:batch_start+self.__batch_size]

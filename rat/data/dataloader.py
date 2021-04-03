@@ -59,7 +59,7 @@ class DataMatrices:
         self.__batch_size = batch_size
         self.__delta = 0  # the count of global increased
         self.__replay_buffer = ReplayBuffer(start_index=0,
-                                            end_index=len(self.__global_data.index)-1,
+                                            end_index=len(self.__global_data.index) - window_size,
                                             sample_bias=buffer_bias_ratio,
                                             batch_size=self.__batch_size,
                                             coin_number=len(self.selected_symbols),
