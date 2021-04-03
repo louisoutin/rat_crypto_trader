@@ -1,19 +1,19 @@
 {
   "database_path": "/home/luisao/perso/rat_crypto_trader/datasets",
   "train_range": {
-    "start": "2019-01-01",
-    "end": "2021-03-01"
+    "start": "2019-06-01",
+    "end": "2021-03-10"
   },
   "val_range": {
-    "start": "2021-03-01",
-    "end": "2021-03-02"
+    "start": "2021-03-10",
+    "end": "2021-03-15"
   },
   "test_range": {
-    "start": "2021-03-02",
+    "start": "2021-03-15",
     "end": "2021-04-01"
   },
   "quote_asset": "BTC",
-  "selected_symbols": ["ETHBTC", "LTCBTC", "BTCUSDT"],
+  "selected_symbols": ["ETHBTC", "LTCBTC", "ADABTC", "XRPBTC", "DOTBTC", "BTCUSDT"],
   "selected_features": ["close", "high", "low", "open"],
   "freq": "30T",
   "total_step": 50000,
