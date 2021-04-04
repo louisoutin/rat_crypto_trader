@@ -89,8 +89,7 @@ class DataManager:
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         df = df.set_index("close_time")
-        print()
-        print(f"NANS {symbol}:", df.isnull().sum(axis=0))
+
         df = df.ffill()
         return df
 
@@ -120,6 +119,9 @@ class DataManager:
             else:
                 actual_symbols.append(coin)
         panel.columns.set_levels(actual_symbols, level=0)
+        unavailable_dates = panel[panel.isna().sum(axis=1) >= 1].index
+        print(f"Unavailable dates (length of {len(unavailable_dates)} timestamps): {unavailable_dates}")
+        panel = panel.ffill()
         return panel
 
     def _find_dataset(self,

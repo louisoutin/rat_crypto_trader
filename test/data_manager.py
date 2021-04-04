@@ -6,9 +6,9 @@ def test_coinlist():
     print("")
     c = DataManager("/home/luisao/perso/rat_crypto_trader/datasets",
                     "BTC",
-                    ["ETHBTC", "LTCBTC", "BTCUSDT"],
+                    ["ETHBTC", "LTCBTC"],
                     ["close", "high", "low", "open"],
-                    "2021-01-01",
+                    "2020-01-01",
                     "2021-02-01",
                     "30T")
     # with pd.option_context('display.max_rows', None, 'display.max_columns', None):

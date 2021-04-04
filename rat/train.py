@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import torch
 from .helpers import make_std_mask
 
@@ -53,6 +54,8 @@ def train_one_step(DM, x_window_size, model, local_context_length, device):
     batch_y = batch["y"]  # (128, 4, 11)
     batch_last_w = batch["last_w"]  # (128, 11)
     batch_w = batch["setw"]
+    print(np.isnan(batch_input))
+    print(batch_input)
     #############################################################################
     previous_w = torch.tensor(batch_last_w, dtype=torch.float, device=device)
     previous_w = torch.unsqueeze(previous_w, 1)  # [128, 11] -> [128,1,11]
