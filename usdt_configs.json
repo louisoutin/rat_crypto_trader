@@ -1,7 +1,7 @@
 {
   "database_path": "/home/luisao/perso/rat_crypto_trader/datasets",
   "train_range": {
-    "start": "2020-01-01",
+    "start": "2021-01-01",
     "end": "2021-03-10"
   },
   "val_range": {
