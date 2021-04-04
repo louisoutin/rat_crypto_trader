@@ -1,0 +1,7 @@
+numpy
+pandas
+fastparquet
+pyarrow
+torch>=1.8.0
+python-binance
+docopt

@@ -1,24 +1,5 @@
-# rat_crypto_trader
-Relation-Aware Transformer for Portfolio Policy Learning
-
-Repo inspired from https://github.com/Ivsxk/RAT with refactored code
-and binance data provider.
-
-
-### Install notes
-Python 3.8
-
-`pip install .`
-
-`rat train default_configs`
-`rat test default_configs`
-
-
-exemple json input:
-
-```
 {
-  "database_path": "path/datasets",
+  "database_path": "/home/luisao/perso/rat_crypto_trader/datasets",
   "train_range": {
     "start": "2021-01-01",
     "end": "2021-03-10"
@@ -43,7 +24,7 @@ exemple json input:
   "variance_penalty": 0.0,
   "cost_penalty": 0.0,
   "learning_rate": 0.0001,
-  "model_dir": "path/runs",
+  "model_dir": "/home/luisao/perso/rat_crypto_trader/runs",
   "model_name": "first",
   "model_index": 1,
   "model_dim": 12,
@@ -52,7 +33,6 @@ exemple json input:
   "weight_decay": 5e-8,
   "daily_interest_rate": 0.001,
   "buffer_bias_ratio": 5e-5,
-  "log_dir": "/path.logs",
+  "log_dir": "/home/luisao/perso/rat_crypto_trader/logs",
   "device": "cuda:0"
 }
-```
