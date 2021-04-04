@@ -12,8 +12,8 @@
     "start": "2021-03-15",
     "end": "2021-04-01"
   },
-  "quote_asset": "BTC",
-  "selected_symbols": ["ETHBTC", "LTCBTC", "ADABTC", "XRPBTC", "ZECBTC", "XLMBTC", "BTCUSDT"],
+  "quote_asset": "USDT",
+  "selected_symbols": ["BTCUSDT", "LTCUSDT", "ADAUSDT", "XRPUSDT", "ZECUSDT", "XLMUSDT"],
   "selected_features": ["close", "high", "low", "open"],
   "freq": "30T",
   "total_step": 50000,

@@ -53,7 +53,7 @@ class DataManager:
         self.database_path = database_path
         self.client = Client()
         info = self.client.get_exchange_info()
-        symbols = [s["symbol"] for s in info["symbols"] if "BTC" in s["symbol"]]
+        symbols = [s["symbol"] for s in info["symbols"] if quote_asset in s["symbol"]]
         self._validate_inputs(selected_symbols, symbols, selected_features)
         self.symbols = selected_symbols
         self.quote_asset = quote_asset
