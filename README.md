@@ -1,7 +1,7 @@
 # rat_crypto_trader
 Relation-Aware Transformer for Portfolio Policy Learning
 
-Repo inspired from https://github.com/Ivsxk/RAT with refactored code
+Repo inspired from https://github.com/Ivsxk/RAT / https://www.ijcai.org/proceedings/2020/641 with refactored code
 and binance data provider.
 
 
