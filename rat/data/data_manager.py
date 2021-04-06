@@ -5,6 +5,24 @@ import numpy as np
 import pandas as pd
 from binance.client import Client
 
+mapping = {
+    '1T': 'Client.KLINE_INTERVAL_1MINUTE',
+    '3T': 'Client.KLINE_INTERVAL_3MINUTE',
+    '5T': 'Client.KLINE_INTERVAL_5MINUTE',
+    '15T': 'Client.KLINE_INTERVAL_15MINUTE',
+    '30T': 'Client.KLINE_INTERVAL_30MINUTE',
+    '1h': 'Client.KLINE_INTERVAL_1HOUR',
+    '2h': 'Client.KLINE_INTERVAL_2HOUR',
+    '4h': 'Client.KLINE_INTERVAL_4HOUR',
+    '6h': 'Client.KLINE_INTERVAL_6HOUR',
+    '8h': 'Client.KLINE_INTERVAL_8HOUR',
+    '12h': 'Client.KLINE_INTERVAL_12HOUR',
+    '1d': 'Client.KLINE_INTERVAL_1DAY',
+    '3d': 'Client.KLINE_INTERVAL_3DAY',
+    '1w': 'Client.KLINE_INTERVAL_1WEEK',
+    '1M': 'Client.KLINE_INTERVAL_1MONTH'
+}
+
 
 class DataManager:
     # CONSTANTS
@@ -24,7 +42,7 @@ class DataManager:
                  selected_features: List[str],
                  date_start: str = "2016-01-01",
                  date_end: str = "2018-01-01",
-                 freq: str = "30min"):
+                 freq: str = "30T"):
         """
         KLINES FORMAT:
 
@@ -57,6 +75,7 @@ class DataManager:
         self._validate_inputs(selected_symbols, symbols, selected_features)
         self.symbols = selected_symbols
         self.quote_asset = quote_asset
+        self.freq = freq
         self.data = self._get_data(selected_symbols, selected_features, date_start, date_end, freq)
 
     def get_data(self):
@@ -78,7 +97,7 @@ class DataManager:
 
         start_date = str(pd.to_datetime(start_date))
         end_date = str(pd.to_datetime(end_date))
-        klines = self.client.get_historical_klines(symbol, Client.KLINE_INTERVAL_30MINUTE, start_date, end_date)
+        klines = self.client.get_historical_klines(symbol, eval(mapping[self.freq]), start_date, end_date)
         klines_data = np.array(klines)[:, :-1]  # we drop the last column as it says it is useless
         df = pd.DataFrame(data=klines_data, columns=self.KLINES_COLUMNS)
         float_cols = [c for c in df.columns if "time" not in c]
@@ -89,7 +108,6 @@ class DataManager:
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         df = df.set_index("close_time")
-
         df = df.ffill()
         return df
 
@@ -105,6 +123,7 @@ class DataManager:
 
         # We add the freq and remove 1ms to match binance close timeindexes
         time_index = pd.date_range(start=start_date, end=end_date, freq=freq) + pd.Timedelta(freq) - pd.Timedelta('1ms')
+        print("time_index", time_index)
         multi_index = pd.MultiIndex.from_product([selected_symbols, selected_features],
                                                  names=[self.COIN_INDEX_NAME, self.FEATURE_INDEX_NAME])
         panel = pd.DataFrame(index=time_index, columns=multi_index)
@@ -120,7 +139,8 @@ class DataManager:
                 actual_symbols.append(coin)
         panel.columns.set_levels(actual_symbols, level=0)
         unavailable_dates = panel[panel.isna().sum(axis=1) >= 1].index
-        print(f"Unavailable dates (length of {len(unavailable_dates)} timestamps): {unavailable_dates}")
+        print(
+            f"Unavailable dates (length of {len(unavailable_dates)}/{len(time_index)} timestamps): {unavailable_dates}")
         panel = panel.ffill()
         return panel
 
